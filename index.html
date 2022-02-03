@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="sonicdelay.net">
+  <style>
+    * {
+	  box-sizing: border-box;
+	  font-family: Arial, Helvetica, sans-serif;
+	}
+
+    html {
+	  height:100%;
+	  background-color:#808080;
+	  overflow:hidden;
+	}
+	body {
+	  height:100%;
+	  padding: 20px;
+	  margin:0 auto;
+	  max-width:1200px;
+	  background-color:#FFFFFF;
+	  overflow:auto;
+	}
+    h1 {
+	  padding: 20px 0;
+	  margin:0;
+	  border-bottom: solid 1px #C0C0C0;
+	}
+	fieldset {
+	  background-color:#FFFFE0;
+	}
+	code {
+	  color: #804000;
+	}
+
+	.right {
+	  float:right;
+	}
+  </style>
+<title>MARKDOWN Viewer</title>
+   </head>
+<body>
+<div id="content"></div>
+<script>
+const entrypoint = "./README.md";
+
+document.addEventListener("DOMContentLoaded", (event) => {
+  linkHandler();
+  load(entrypoint, '#content');
+  console.log("Loaded");
+});
+
+const linkHandler = () => {
+  document.addEventListener("click", (event) => {
+    const et = event.target;
+    if (et.nodeName == "A") {
+      event.preventDefault();
+      const url = et.getAttribute("href");
+      console.dir(url);
+      if (/^(f|ht)tps?:\/\//i.test(url)) {
+        window.open(url, url, "");
+      } else if (/\{.*\}/g.test(url)) {
+        console.log(`Object ${url}`);
+        alert(url);
+      } else {
+        console.log(`Intern ${url}`);
+        load(url, '#content');
+      }
+    }
+  });
+};
+
+const load = async (url, targetSelector) => {
+  try {
+    const response = await fetch(url)
+      .then(response => response.text())
+      .then(data => {
+        const el = document.querySelector(targetSelector);
+        el.innerHTML = parseMarkdown(data);
+      });
+	} catch (e) {
+	  console.log(e);
+	}
+};
+
+function parseMarkdown(markdownText) {
+  const htmlText = markdownText
+    .replace(/---$/gim, '<hr/>')
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/^\* (.*$)/gim, '<ul>&#8226;&nbsp;<l1>$1</l1></ul>')
+    .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+    .replace(/^((?:(?:[`]{3}))([\s\S]*?)([`]{3}))/gmi, '<fieldset>$2</fieldset>')
+    .replace(/^((?:(?:[`]{1}))([\s\S]*?)([`]{1}))/gmi, '<code>$2</code>')
+    .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
+    .replace(/\*(.*)\*/gim, '<i>$1</i>')
+    .replace(/!\[(.*?)\]\((.*?)\)/gim, "<img alt='$1' src='$2' />")
+    .replace(/\[(.*?)\]\((.*?)\)/gim, "<a href='$2'>$1</a>")
+    .replace(/\n$/gim, '<br />');
+  return htmlText.trim();
+}
+</script>
+</body>
+</html>
